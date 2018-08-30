@@ -1,6 +1,6 @@
 # coding: utf-8
 import gym 
-import envs 
+import env
 
 # --- Flags
 LOAD_MODEL = False 

@@ -4,9 +4,10 @@ from chainer import functions as F
 from chainer import Chain, optimizers 
 
 from constants import * 
-from utils import *
-from networks.actor import Actor 
-from networks.critic import Critic
+from utils.utils import *
+from utils.logger import Logger
+from network.actor import Actor 
+from network.critic import Critic
 
 class Actor_critic(Chain):
     def __init__(self):
@@ -35,7 +36,7 @@ class Actor_critic(Chain):
     def update(self):
         obs = F.stack(np.array(self.obs, dtype=np.float32))
         Vs = self.critic(obs)
-        log_pies = F.stack(self.log_pies).reshape(1, -1)[:,:-1] #(1,5)
+        log_pies = F.stack(self.log_pies).reshape(1, -1)[:, :-1] #(1,5)
         As = F.stack([self.rewards[i] + GAMMA*Vs[i+1] - Vs[i] for i in range(len(Vs)-1)]) #(5,1)
         loss = -F.matmul(log_pies, As)
         

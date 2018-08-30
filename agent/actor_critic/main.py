@@ -3,11 +3,13 @@ import numpy as np
 from chainer import serializers 
 
 from constants import *
-from utils import Logger 
+from utils.logger import Logger 
 from actor_critic import Actor_critic
 
 class Trainer():
     def __init__(self, agent, logger):
+        self.agent = agent
+        self.logger = logger
         self.time = 0
         self.ep_finished = 0
         self.num_ep = NUM_EP
@@ -15,31 +17,39 @@ class Trainer():
     def run(self):
         for ep in range(self.ep_finished, self.num_ep):
             s, r = ENV.reset(), 0
-            agent.reset()
+            self.agent.reset()
             ep_reward = 0
             ep_loss = 0
 
             for ep_time in range(NUM_EP_STEP):
-                a = agent.step(s, r)
+                a = self.agent.step(s, r)
                 s, r, done, info = ENV.step(a)
                 ep_reward += r 
                 self.time += 1
 
                 if done:
-                    loss = agent.update()
+                    loss = self.agent.update()
                     ep_loss += loss
-                    agent.reset()
                     break 
-                elif (ep_time+1) % TRAIN_INTERVAL == 0:
-                    loss = agent.update()
-                    ep_loss += loss
-                    agent.reset()
+                #elif (ep_time+1) % TRAIN_INTERVAL == 0:
+                #    loss, done = self._bootstrap_update()
+                #    ep_loss += loss
+                #    self.agent.reset()
+                #    if done:
+                #        break
 
             if ep % 100 == 0:
-                print('episode {}: reward={}, loss={}'.format(ep+1, ep_reward, ep_loss))
-            logger.add(reward=ep_reward, loss=ep_loss)
+                print('episode {}: reward={}, loss={}'.format(ep, ep_reward, ep_loss))
+            self.logger.add(reward=ep_reward, loss=ep_loss)
             self.ep_finished += 1
 
+    def _bootstrap_update(self):
+        """add bootstrap step. (without time increment)"""
+        a = self.agent.step(s, r)
+        s, r, done, info = ENV.step(a)
+        loss = self.agent.update()
+        return loss, done
+            
     def render(self):
         print('rendering the training result...')
         for ep in range(NUM_EP_RENDER):
