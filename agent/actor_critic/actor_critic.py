@@ -5,7 +5,6 @@ from chainer import Chain, optimizers
 
 from constants import * 
 from utils.utils import *
-from utils.logger import Logger
 from network.actor import Actor 
 from network.critic import Critic
 
@@ -18,35 +17,44 @@ class Actor_critic(Chain):
         self.optimizer = optimizers.Adam()
         self.optimizer.setup(self)
 
-    def reset(self):
-        self.obs = []
+    def reset(self, s):
+        a_id, log_pi = self._get_action(s)
+        self.states = []
         self.rewards = []
         self.log_pies = []
+        return a_id
 
-    def step(self, o, r):
-        O, = make_batch(o)
-        log_pi, a = self.actor(O)
-        a_id = np.where(a==1)[0][0]   # action index
-        log_pi = log_pi[0][a_id]
-        self.obs.append(o)
+    def step(self, s, r):
+        a_id, log_pi = self._get_action(s)
+        self.states.append(s)
         self.rewards.append(r)
         self.log_pies.append(log_pi)
         return a_id
 
+    def _get_action(self, s):
+        S, = make_batch(s)
+        log_pi, a = self.actor(S)
+        a_id = np.where(a==1)[0][0]   # action index
+        log_pi = log_pi[0][a_id]
+        return a_id, log_pi
+
     def update(self):
-        obs = F.stack(np.array(self.obs, dtype=np.float32))
-        Vs = self.critic(obs)
-        log_pies = F.stack(self.log_pies).reshape(1, -1)[:, :-1] #(1,5)
-        As = F.stack([self.rewards[i] + GAMMA*Vs[i+1] - Vs[i] for i in range(len(Vs)-1)]) #(5,1)
-        loss = -F.matmul(log_pies, As)
+        states = F.stack(np.array(self.states, dtype=np.float32))  #(*, 1)
+        V_pred = self.critic(states)
+        V_target = make_target_value(self.rewards, V_pred, GAMMA)
+        critic_loss = F.mean_squared_error(V_pred, V_target)
+
+        log_pies = F.stack(self.log_pies).reshape(1, -1)  #(1, *)
+        As_stopgrad = (V_target - V_pred).data  #(*, 1)
+        actor_loss = -F.matmul(log_pies, As_stopgrad)
         
         self.cleargrads()
-        loss.backward()
+        actor_loss.backward()
+        critic_loss.backward()
         self.optimizer.update()
-        loss.unchain_backward()
-        return loss.data[0][0]
+        actor_loss.unchain_backward()
+        critic_loss.unchain_backward()
 
-        
-        
-        
-        
+        return actor_loss.data[0][0], critic_loss.data
+
+            

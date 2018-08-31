@@ -16,51 +16,54 @@ class Trainer():
     
     def run(self):
         for ep in range(self.ep_finished, self.num_ep):
-            s, r = ENV.reset(), 0
-            self.agent.reset()
+            s = ENV.reset()
+            a = self.agent.reset(s)
             ep_reward = 0
-            ep_loss = 0
+            ep_actor_loss = 0
+            ep_critic_loss = 0
 
             for ep_time in range(NUM_EP_STEP):
-                a = self.agent.step(s, r)
                 s, r, done, info = ENV.step(a)
+                a = self.agent.step(s, r)
                 ep_reward += r 
                 self.time += 1
 
                 if done:
-                    loss = self.agent.update()
-                    ep_loss += loss
-                    break 
+                    actor_loss, critic_loss = self.agent.update()
+                    ep_actor_loss += actor_loss
+                    ep_critic_loss += critic_loss
+                    break
                 #elif (ep_time+1) % TRAIN_INTERVAL == 0:
-                #    loss, done = self._bootstrap_update()
+                #    actor_loss, critic_loss, done = self._bootstrap_update()
                 #    ep_loss += loss
                 #    self.agent.reset()
                 #    if done:
                 #        break
 
             if ep % 100 == 0:
-                print('episode {}: reward={}, loss={}'.format(ep, ep_reward, ep_loss))
-            self.logger.add(reward=ep_reward, loss=ep_loss)
+                print('episode {}: reward={}, actor loss={}, critic loss={}'.format(ep, ep_reward, ep_actor_loss, ep_critic_loss))
+            self.logger.add_data(reward=ep_reward, actor_loss=ep_actor_loss, critic_loss=ep_critic_loss)
+            self.logger.add_params(self.agent)
             self.ep_finished += 1
 
     def _bootstrap_update(self):
         """add bootstrap step. (without time increment)"""
         a = self.agent.step(s, r)
         s, r, done, info = ENV.step(a)
-        loss = self.agent.update()
-        return loss, done
+        actor_loss, critic_loss = self.agent.update()
+        return actor_loss, critic_loss, done
             
     def render(self):
         print('rendering the training result...')
         for ep in range(NUM_EP_RENDER):
-            s, r = ENV.reset(), 0
-            agent.reset()
+            s = ENV.reset()
+            a = agent.reset(s)
             ep_reward = 0
 
             for ep_time in range(NUM_EP_STEP):
                 ENV.render()
-                a = agent.step(s, r)
                 s, r, done, info = ENV.step(a)
+                a = agent.step(s, r)
                 ep_reward += r 
                 if done:
                     break
@@ -70,7 +73,7 @@ class Trainer():
 
 if __name__ == '__main__':
     agent = Actor_critic()
-    logger = Logger(ENV_NAME)
+    logger = Logger(ENV_NAME, agent)
     trainer = Trainer(agent, logger)
     if LOAD_MODEL:
         logger.load_model(agent, LOAD_DIR_NAME)
@@ -85,7 +88,8 @@ if __name__ == '__main__':
             traceback.print_exc()
 
         if TRAINING:
-            logger.visualize(avg_step=100)
+            logger.visualize_params()
+            logger.visualize_data(avg_step=100)
         if SAVE_MODEL:
             logger.save_model(agent)
         if RENDER_AFTER_TRAINING:
