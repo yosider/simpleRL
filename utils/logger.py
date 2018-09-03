@@ -9,7 +9,7 @@ from chainer import serializers
 
 class Logger():
     def __init__(self, env_name, agent):
-        self.logroot = Path('log') / env_name
+        self.logroot = Path('logs') / env_name
         self.logdir = self.logroot / datetime.now().isoformat()[:19].replace(':', '-')
         self.logdir.mkdir(parents=True, exist_ok=True)
 
@@ -54,7 +54,7 @@ class Logger():
             
     def visualize_params(self):
         sorted_params = sorted(self.params.items(), key=lambda x: x[0])
-        print(self.params.keys())
+        #print(self.params.keys())
         for (b_name, b), (w_name, w) in chunked(sorted_params, 2):
             # 転置して同じ成分の時系列が行に並ぶようにする
             b = b[:self.params_count, :].T
@@ -72,7 +72,7 @@ class Logger():
             plt.xlabel('episodes')
 
             plt.savefig(str(self.logdir / '{}.png'.format(w_name.replace('/', '_'))))
-            plt.show()
+            #plt.show()
 
     def save_model(self, agent):
         serializers.save_npz(str(self.logdir / 'model.npz'), agent)
