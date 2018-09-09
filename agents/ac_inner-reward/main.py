@@ -37,15 +37,13 @@ class Trainer():
                     actor_loss, critic_loss = self.agent.update()
                     ep_actor_loss += actor_loss 
                     ep_critic_loss += critic_loss
-                    a = self.agent.reset(s)
+                    self.agent.reset()
 
-            ep_actor_loss /= ep_time
-            ep_critic_loss /= ep_time
-            self.logger.add_data(reward=ep_reward, actor_average_loss=ep_actor_loss, critic_average_loss=ep_critic_loss)
+            self.logger.add_data(reward=ep_reward, actor_loss=ep_actor_loss, critic_loss=ep_critic_loss)
             self.logger.add_params(self.agent)
             self.ep_finished += 1
             if ep % 100 == 0:
-                print('episode {}: reward={}, actor avg loss={:.2e}, critic avg loss={:.2e}'.format(ep, ep_reward, ep_actor_loss, ep_critic_loss))
+                print('episode {}: reward={}, actor loss={}, critic loss={}'.format(ep, ep_reward, ep_actor_loss, ep_critic_loss))
 
     #def _bootstrap_update(self):
     #    """add bootstrap step. (without time increment)"""

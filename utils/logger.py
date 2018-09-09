@@ -15,7 +15,7 @@ class Logger():
 
         self.data = {}
         self.max_params_size = 10000 #TODO
-        self.params_count = 0
+        self.store_counts = 0
         self.params = self._init_params(agent)
 
     def add_data(self, **args):
@@ -36,6 +36,7 @@ class Logger():
             plt.title(name.replace('_', ' '))
             plt.savefig(str(self.logdir / '{}.png'.format(name)))
             plt.show()
+            plt.clf()
 
     def _init_params(self, agent):
         params = dict()
@@ -46,25 +47,25 @@ class Logger():
     def add_params(self, agent):
         for name, param in agent.namedparams():
             assert name in self.params.keys()
-            self.params[name][self.params_count] = param.data.reshape(-1)
-        self.params_count += 1
-        if self.params_count == self.max_params_size - 1:
+            self.params[name][self.store_counts] = param.data.reshape(-1)
+        self.store_counts += 1
+        if self.store_counts == self.max_params_size - 1:
             raise(NotImplementedError)
             #TODO
             
     def visualize_params(self):
+        # sort by key names
         sorted_params = sorted(self.params.items(), key=lambda x: x[0])
-        #print(self.params.keys())
         for (b_name, b), (w_name, w) in chunked(sorted_params, 2):
-            # 転置して同じ成分の時系列が行に並ぶようにする
-            b = b[:self.params_count, :].T
+            # 転置して同じ重み成分の時系列が行に並ぶようにする
+            b = b[:self.store_counts, :].T
             plt.subplot(121)
             for elm in b:
                 plt.plot(elm)
             plt.title(b_name.replace('/', ' '))
             plt.xlabel('episodes')
 
-            w = w[:self.params_count, :].T
+            w = w[:self.store_counts, :].T
             plt.subplot(122)
             for elm in w:
                 plt.plot(elm)
@@ -73,6 +74,7 @@ class Logger():
 
             plt.savefig(str(self.logdir / '{}.png'.format(w_name.replace('/', '_'))))
             #plt.show()
+            plt.clf()
 
     def save_model(self, agent):
         serializers.save_npz(str(self.logdir / 'model.npz'), agent)

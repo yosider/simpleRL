@@ -40,6 +40,7 @@ class Actor_critic(Chain):
         return a_id, log_pi
 
     def update(self):
+        print(len(self.states))
         states = F.stack(np.array(self.states, dtype=np.float32))  #(*, 1)
         V_pred = self.critic(states)
         V_target = make_target_value(self.rewards, V_pred, GAMMA)
