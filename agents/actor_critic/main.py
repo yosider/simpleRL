@@ -4,13 +4,13 @@ from chainer import serializers
 
 from constants import *
 from utils.logger import Logger
-from utils.trainer import Trainer
+from trainer import Trainer
 from actor_critic import Actor_critic
 
 
 if __name__ == '__main__':
     agent = Actor_critic()
-    logger = Logger(ENV_NAME, agent)
+    logger = Logger(ENV_NAME, agent, LOG_PARAMS)
     trainer = Trainer(agent, logger)
     if LOAD_MODEL:
         logger.load_model(agent, LOAD_DIR_NAME)

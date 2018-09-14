@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from chainer import serializers
 
 class Logger():
-    def __init__(self, env_name, agent):
+    def __init__(self, env_name, agent, log_params):
         self.logroot = Path('logs') / env_name
         self.logdir = self.logroot / datetime.now().isoformat()[:19].replace(':', '-')
         self.logdir.mkdir(parents=True, exist_ok=True)
@@ -49,9 +49,9 @@ class Logger():
             assert name in self.params.keys()
             self.params[name][self.store_counts] = param.data.reshape(-1)
         self.store_counts += 1
-        if self.store_counts == self.max_params_size - 1:
-            raise(NotImplementedError)
-            #TODO
+        #if self.store_counts == self.max_params_size - 1:
+        #    raise(NotImplementedError)
+        #TODO
             
     def visualize_params(self):
         # sort by key names
