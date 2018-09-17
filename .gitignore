@@ -1,4 +1,7 @@
-logs/
 __pycache__
 memo.md
 .vscode
+
+agents/actor_critic/logs/CartPole-v0/*
+agents/ddpg/logs/Pendulum-v0/*
+!__2018-09-17T15-52-33
